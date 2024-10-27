@@ -3,6 +3,7 @@ package models
 import "gorm.io/gorm"
 
 type Review struct {
+    gorm.Model
     ID      uint   `gorm:"primaryKey;autoIncrement" json:"id"`
     UserID  uint   `gorm:"not null" json:"user_id"`
     BookID  uint   `gorm:"not null" json:"book_id"`
