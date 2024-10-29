@@ -3,6 +3,7 @@ package main
 import (
   "tp/config"
   "tp/internal/controllers"
+  "tp/internal/repositories"
   "github.com/gin-gonic/gin"
 )
 
@@ -12,15 +13,16 @@ func main() {
 
   r := gin.Default()
   
+  //Instanciando um repositorio e um controller
+  bookRepo := repositories.NewBookRepository()
+  bookController := controllers.NewBookController(bookRepo)
+  
   //Definir rotas
-  r.POST("/user", controllers.CreateUser)
-  r.POST("/users", controllers.CreateUser)
-  r.POST("/books", controllers.CreateBook)
-  r.GET("/books", controllers.GetAllBooks)
-  r.GET("/books/:id", controllers.GetBookByID)
-  r.PUT("/books/:id", controllers.UpdateBook)
-  r.DELETE("/books/:id", controllers.DeleteBook)
-  r.POST("/reviews", controllers.CreateReview)
+  r.POST("/books", bookController.CreateBook)
+  r.GET("/books", bookController.GetAllBooks)
+  r.GET("/books/:id", bookController.GetBookByID)
+  r.PUT("/books/:id", bookController.UpdateBook)
+  r.DELETE("/books/:id", bookController.DeleteBook)
 
   r.Run(":8080")
 }
