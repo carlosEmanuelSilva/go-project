@@ -3,17 +3,17 @@ package controllers
 import (
   "net/http"
   "tp/internal/models"
-  "tp/internal/repositories"
+  "tp/internal/services"
   "github.com/gin-gonic/gin"
   "strconv"
 )
 
 type BookController struct {
-  repository repositories.BookRepository
+  service services.BookService
 }
 
-func NewBookController(repo repositories.BookRepository) *BookController {
-  return &BookController{repository: repo}
+func NewBookController(service services.BookService) *BookController {
+  return &BookController{service: service}
 }
 
 // Cria um novo livro
@@ -23,7 +23,7 @@ func (bc *BookController) CreateBook(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
-    if err := bc.repository.Create(&book); err != nil {
+    if err := bc.service.CreateBook(&book); err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
@@ -32,7 +32,7 @@ func (bc *BookController) CreateBook(c *gin.Context) {
 
 // Obtém todos os livros
 func (bc *BookController) GetAllBooks(c *gin.Context) {
-   books, err := bc.repository.FindAll()
+   books, err := bc.service.GetAllBooks()
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
@@ -48,7 +48,7 @@ func (bc *BookController) GetBookByID(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid book ID"})
         return
     }
-    book, err := bc.repository.FindByID(uint(id))
+    book, err := bc.service.GetBookByID(uint(id))
     if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "Book not found"})
         return
@@ -58,25 +58,34 @@ func (bc *BookController) GetBookByID(c *gin.Context) {
 
 // Atualiza um livro pelo ID
 func (bc *BookController) UpdateBook(c *gin.Context) {
+      // Extrai o ID do livro da URL
     idParam := c.Param("id")
     id, err := strconv.ParseUint(idParam, 10, 32)
     if err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid book ID"})
         return
     }
-    book, err := bc.repository.FindByID(uint(id))
+
+    // Busca o livro existente no serviço
+    book, err := bc.service.GetBookByID(uint(id))
     if err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "Book not found"})
         return
     }
+
+    // Faz o bind do JSON recebido para a estrutura do livro existente
     if err := c.ShouldBindJSON(&book); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
-    if err := bc.repository.Update(book); err != nil {
+
+    // Chama o serviço para atualizar o livro
+    if err := bc.service.UpdateBook(book); err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
+
+    // Retorna o livro atualizado
     c.JSON(http.StatusOK, book)
 }
 
@@ -88,7 +97,7 @@ func (bc *BookController) DeleteBook(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid book ID"})
         return
     }
-    if err := bc.repository.Delete(uint(id)); err != nil {
+    if err := bc.service.DeleteBook(uint(id)); err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }

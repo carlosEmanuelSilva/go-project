@@ -4,6 +4,7 @@ import (
   "tp/config"
   "tp/internal/controllers"
   "tp/internal/repositories"
+  "tp/internal/services"
   "github.com/gin-gonic/gin"
 )
 
@@ -13,9 +14,9 @@ func main() {
 
   r := gin.Default()
   
-  //Instanciando um repositorio e um controller
   bookRepo := repositories.NewBookRepository()
-  bookController := controllers.NewBookController(bookRepo)
+  bookService := services.NewBookService(bookRepo)
+  bookController := controllers.NewBookController(bookService)
   
   //Definir rotas
   r.POST("/books", bookController.CreateBook)
