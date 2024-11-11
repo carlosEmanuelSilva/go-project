@@ -1,56 +1,24 @@
 package main
 
 import (
-  "fmt"
-  "net/http"
-  "log"
+	"fmt"
+  	"net/http"
 
-  "github.com/gorilla/websocket"
+	"github.com/x86-carlos/go-project/pkg/websocket"
 )
 
-var upgrader = websocket.Upgrader {
-  ReadBufferSize: 1024,
-  WriteBufferSize: 1024,
-  CheckOrigin: func(r *http.Request) bool { return true },
-}
-
-func reader(conn *websocket.Conn) {
-  for {
-    messageType, p, err := conn.ReadMessage()
-
-    if err != nil {
-      log.Println(err)
-      return
-    }
-  
-    fmt.Println(p)
-
-    if err := conn.WriteMessage(messageType, p); err != nil {
-      log.Println(err)
-      return
-    }
-
-  }
-}
-
 func serverWs(w http.ResponseWriter, r *http.Request) {
-  fmt.Println(r.Host)
+	ws, err := websocket.Upgrade(w, r)
 
-  ws, err := upgrader.Upgrade(w, r, nil)
-
-  if err != nil {
-    log.Println(err)
-  }
-
-  reader(ws)
+	if err != nil {
+		fmt.Fprintf(w,"%+V\n", err)
+	}
+	go websocket.Writer(ws)
+	websocket.Reader(ws)
 }
 
 func setupRoutes() {
-  http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "Setup do servidor")
-  })
-
-  http.HandleFunc("/ws", serverWs)
+	http.HandleFunc("/ws", serverWs)
 }
 
 func main() {
